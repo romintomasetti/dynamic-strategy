@@ -1,0 +1,28 @@
+# Name of this action
+name: test-dynamic-strategy
+
+# Run on push, pull requests or manually triggered.
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+jobs:
+    setup-job-matrix:
+        runs-on: ubuntu-latest
+        outputs:
+            # JSON string that represents the strategy matrix
+            matrix: ${{ steps.set-matrix.outputs.matrix }}
+        steps:
+            - id: set-matrix
+              run: |
+                echo "::set-output name=matrix::[{\"node\":\"10\",\"os\":\"first\"},{\"node\":\"15\",\"os\":\"second\"}]"
+    the-big-matrix:
+        needs: setup-job-matrix
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include: ${{ fromJSON(needs.setup-job-matrix.outputs.matrix) }}
+        steps:
+            - run: |
+                echo "> Node version would be ${{ matrix.node }} ${{ matrix.os }}"
